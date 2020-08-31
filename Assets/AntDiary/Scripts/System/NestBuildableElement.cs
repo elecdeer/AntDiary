@@ -33,6 +33,7 @@ namespace AntDiary
             {
                 DataAsBuildableElement.IsUnderConstruction = false;
                 DataAsBuildableElement.BuildingProgress = 0;
+                NestSystem.Instance.OnChangeNestPath();
                 OnBuildingCompleted();
             }
         }

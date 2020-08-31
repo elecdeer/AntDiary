@@ -31,9 +31,12 @@ namespace AntDiary{
 			//建築中のElementの各ノードとそのホスト(建築中)をペアにして、それを現在位置との直線距離の短い順でソート
 			//TODO 厳密には移動コスト順にすべき
 			var buildingNodes = buildingElements
-				.SelectMany(elem => elem.GetBuildingNode().Select(node => new Tuple<NestBuildableElement, NestPathNode>(elem, node as NestPathNode)).ToList())
-				.OrderBy(tuple => Vector3.Distance(tuple.Item2.WorldPosition, currentNode.WorldPosition));
-			
+				.SelectMany(elem => elem.GetBuildingNode().Select(node => {
+					var pathNode = node as NestPathNode;
+					return (elem, pathNode);
+				}).ToList())
+				.OrderBy(tuple => Vector3.Distance(tuple.pathNode.WorldPosition, currentNode.WorldPosition));
+
 			
 			// Debug.Log("buildingNodes");
 			// foreach(var tuple in buildingNodes){
@@ -41,10 +44,10 @@ namespace AntDiary{
 			// }
 			
 			var distTuple = buildingNodes.FirstOrDefault(tuple =>
-				NestSystem.Instance.FindRoute(tuple.Item2, currentNode).Count() >= 2);
+				NestSystem.Instance.FindRoute(tuple.pathNode, currentNode).Count() >= 2);
 			
 			
-			HostAnt.ChangeStrategy(new MoveStrategy(HostAnt, distTuple.Item1, distTuple.Item2));
+			HostAnt.ChangeStrategy(new MoveStrategy(HostAnt, distTuple.elem, distTuple.pathNode));
 
 
 		}

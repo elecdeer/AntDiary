@@ -86,6 +86,10 @@ namespace AntDiary
         /// </summary>
         public IEnumerable<NestPathNode> NestPathNodes => NestElements.SelectMany(e => e.GetNodes());
 
+        
+        private readonly Dictionary<(NestPathNode from, NestPathNode to), IEnumerable<IPathNode>> _routeSearchCache = new Dictionary<(NestPathNode, NestPathNode), IEnumerable<IPathNode>>();
+
+        
         private void Start()
         {
             if (SaveUnit.Current != null)
@@ -97,8 +101,23 @@ namespace AntDiary
             //次にセーブデータが変更（ロード）されたときに、巣を更新する
             SaveUnit.OnCurrentSaveUnitChanged.Subscribe(su => LoadData());
 
+            
+            this.ObserveEveryValueChanged(system => system.nestElements)
+                .Subscribe(list => {
+                    OnChangeNestPath();
+                });
+            
             BuildingSystem = new BuildingSystem(this);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void OnChangeNestPath(){
+            Debug.Log("onNestElementsChanged");
+            _routeSearchCache.Clear();
+        }
+        
 
         /// <summary>
         /// NestDataをもとに巣を再構築する。
@@ -277,10 +296,21 @@ namespace AntDiary
             return edge;
         }
 
+
+        
         public IEnumerable<IPathNode> FindRoute(NestPathNode from, NestPathNode to)
         {
+            
+            if(_routeSearchCache.ContainsKey((from, to))){
+                Debug.Log("use cache");
+                return _routeSearchCache[(from, to)];
+            }
+            
             AStarSearcher searcher = new AStarSearcher(null);
+            
             searcher.SearchRoute(from, to);
+            _routeSearchCache[(from, to)] = searcher.Route;
+            
             return searcher.Route;
         }
 
